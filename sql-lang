@@ -1,0 +1,13 @@
+command ::= create-clause
+          | update-clause
+          | delete-clause
+
+int-type ::= int
+           | integer
+char-type ::= char([0-9]+)
+            | varchar([0-9]+)
+column-type ::= int-type
+              | char-type
+column-specifier ::= COLUMN_NAME column-type
+column-specifier-list ::= column-specifier (, column-specifier)*
+create-clause ::= create table TABLE_NAME column-specifier-list
