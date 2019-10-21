@@ -104,12 +104,22 @@ bool match_token_kind_and_eat(Parser *parser, TokenKind kind) {
 
 char *keyword_create = "create";
 char *keyword_table = "table";
+char *keyword_drop = "drop";
+char *keyword_alter = "alter";
+char *keyword_add = "add";
+char *keyword_column = "column";
+char *keyword_truncate = "truncate";
 
 #define intern(p, x) p##_##x = intern_str(intern_table, p##_##x)
 
 void init_keywords(StringTable *intern_table) {
     intern(keyword, create);
     intern(keyword, table);
+    intern(keyword, drop);
+    intern(keyword, alter);
+    intern(keyword, add);
+    intern(keyword, column);
+    intern(keyword, truncate);
 }
 
 char *typename_int = "int";
@@ -205,6 +215,53 @@ void parse_create_clause(Parser *parser) {
     expect_token_kind_and_eat(parser, ')');
 }
 
+void parse_drop_clause(Parser *parser) {
+    expect_token_keyword_and_eat(parser, keyword_drop);
+    expect_token_keyword_and_eat(parser, keyword_table);
+    Token table_name_token = expect_token_kind_and_eat(parser, TOKEN_IDENTIFIER);
+    char *table_name = table_name_token.str_val;
+    printf("Droping %s\n", table_name);
+}
+
+ColumnSpec *parse_add_specifier(Parser *parser) {
+    ColumnSpec *spec = parse_column_specifier(parser);
+    return spec;
+}
+
+void parse_drop_specifier(Parser *parser) {
+    expect_token_keyword_and_eat(parser, keyword_column);
+    Token column_name_token = expect_token_kind_and_eat(parser, TOKEN_IDENTIFIER);
+    char *column_name = column_name_token.str_val;
+    printf("Alter drop %s\n", column_name);
+}
+
+void parse_alter_specifier(Parser *parser) {
+    char *keyword = parser->current_token.str_val;
+    next_token(parser);
+    if (keyword == keyword_add) {
+        ColumnSpec *alter_spec = parse_add_specifier(parser);
+        printf("Alter add %s %s\n", alter_spec->name, alter_spec->type->name);
+    } else if (keyword == keyword_drop) {
+        parse_drop_specifier(parser);
+    }
+}
+
+void parse_alter_clause(Parser *parser) {
+    expect_token_keyword_and_eat(parser, keyword_alter);
+    expect_token_keyword_and_eat(parser, keyword_table);
+    Token table_name_token = expect_token_kind_and_eat(parser, TOKEN_IDENTIFIER);
+    char *table_name = table_name_token.str_val;
+    parse_alter_specifier(parser);
+}
+
+void parse_truncate_clause(Parser *parser) {
+    expect_token_keyword_and_eat(parser, keyword_truncate);
+    expect_token_keyword_and_eat(parser, keyword_table);
+    Token table_name_token = expect_token_kind_and_eat(parser, TOKEN_IDENTIFIER);
+    char *table_name = table_name_token.str_val;
+    printf("Truncating %s\n", table_name);
+}
+
 void execute_meta_command(Parser *parser) {
     next_token(parser);
     Token meta_command_token = expect_token_kind_and_eat(parser, TOKEN_IDENTIFIER);
@@ -227,6 +284,12 @@ void parse_command(Parser *parser) {
         case TOKEN_IDENTIFIER:
             if (parser->current_token.str_val == keyword_create) {
                 parse_create_clause(parser);
+            } else if (parser->current_token.str_val == keyword_drop) {
+                parse_drop_clause(parser);
+            } else if (parser->current_token.str_val == keyword_alter) {
+                parse_alter_clause(parser);
+            } else if (parser->current_token.str_val == keyword_truncate) {
+                parse_truncate_clause(parser);
             }
             break;
         case '.':

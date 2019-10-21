@@ -1,4 +1,7 @@
 command ::= create-clause
+          | alter-clause
+          | drop-clause
+          | truncate-clause
 
 int-type ::= int
            | integer
@@ -9,3 +12,13 @@ column-type ::= int-type
 column-specifier ::= COLUMN_NAME column-type
 column-specifier-list ::= column-specifier (, column-specifier)*
 create-clause ::= create table TABLE_NAME ( column-specifier-list )
+
+drop-specifier ::= drop column COLUMN_NAME
+add-specifier ::= add column-specifier
+alter-specifier ::= add-specifier
+                  | drop-specifier
+alter-clause ::= alter table TABLE_NAME alter-specifier
+
+drop-clause ::= drop table TABLE_NAME
+
+truncate-clause ::= truncate table TABLE_NAME
